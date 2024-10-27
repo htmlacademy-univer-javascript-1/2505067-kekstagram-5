@@ -1,39 +1,37 @@
-function checkLength (string, maxlength) {
-  return string.length <= maxlength;
-}
+const checkLength = (string, maxLength) => string.length <= maxLength;
 
-//tests
-// console.log(checkLength('проверяемая строка', 20));
-// console.log(checkLength('проверяемая строка', 18))；
-// console.log(checkLength('проверяемая строка', 10));
-checkLength('проверяемая строка', 20);
-
-
-function IsPalindrome (string) {
-  string = string.replaceAll(' ', '').toLowerCase();
-  const normalizedString = string;
-  let reversedString = '';
-
-  for (let i = string.length - 1; i >= 0; i--) {
-    reversedString += normalizedString.at(i);
+function isPalindrome(string) {
+  const normalizedString = string.replaceAll(' ','').toLowerCase();
+  let newString = '';
+  for (let i = normalizedString.length - 1; i >= 0; i--) {
+    newString += normalizedString[i];
   }
-
-  return reversedString === string;
+  return (newString === normalizedString);
 }
 
-IsPalindrome('топот');
-
-function findNumbers (string) {
-  string = String(string);
-  let number = '';
-
-  for (let i = 0; i < string.length; i++) {
-    if (!isNaN(parseInt(string.at(i), 10))) {
-      number += string.at(i);
+function getDigitsFromString(string) {
+  let digit = '';
+  for (let i = 0; i <= String(string).length - 1; i++) {
+    const currentSymbol = String(string)[i];
+    if (!isNaN(currentSymbol) && currentSymbol !== ' ') {
+      digit += currentSymbol;
     }
   }
-
-  return number === '' ? NaN : Number(number);
+  return digit.length === 0 ? NaN : digit;
 }
 
-findNumbers('2023 год');
+const getTimeInMinutes = (time) => {
+  const hoursAndMinutes = time.split(':');
+  return Number(hoursAndMinutes[0]) * 60 + Number(hoursAndMinutes[1]);
+};
+
+function checkMeetingTime(workStart, workEnd, meetingStart, duration) {
+  const meetingStartInMinutes = getTimeInMinutes(meetingStart);
+  return meetingStartInMinutes >= getTimeInMinutes(workStart) &&
+  meetingStartInMinutes + duration <= getTimeInMinutes(workEnd);
+}
+
+checkMeetingTime();
+getDigitsFromString();
+isPalindrome();
+checkLength();
