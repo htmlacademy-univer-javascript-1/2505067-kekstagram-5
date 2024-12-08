@@ -1,6 +1,7 @@
 import './data.js';
 import './util.js';
 
-import './show-pictures.js';
+import { renderGallery } from './gallery.js';
 import { generatePhotos } from './data.js';
-generatePhotos();
+
+renderGallery(generatePhotos());
