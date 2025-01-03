@@ -1,27 +1,37 @@
-const getRandomInteger = (a, b) => {
-  const lower = Math.ceil(Math.min(a, b));
-  const upper = Math.floor(Math.max(a, b));
-  const result = Math.random() * (upper - lower + 1) + lower;
-  return Math.floor(result);
+const ALERT_DISPLAY_DURATION = 5000;
+const isEscape = (evt) => evt.key === 'Escape';
+
+const showingAlert = (message) => {
+  const alertMessage = document.createElement('div');
+  alertMessage.style.zIndex = '100';
+  alertMessage.style.position = 'absolute';
+  alertMessage.style.left = '0';
+  alertMessage.style.top = '0';
+  alertMessage.style.right = '0';
+  alertMessage.style.padding = '10px 3px';
+  alertMessage.style.fontSize = '30px';
+  alertMessage.style.textAlign = 'center';
+  alertMessage.style.backgroundColor = 'red';
+  alertMessage.textContent = message;
+  document.body.append(alertMessage);
+  setTimeout(() => {
+    alertMessage.remove();
+  }, ALERT_DISPLAY_DURATION);
 };
 
-const createRandomId = (min, max) => {
-  const previousValues = [];
-  return function () {
-    let currentValue = getRandomInteger(min, max);
-    if (previousValues.length >= (max - min + 1)) {
-      return;
+const checkForRepeatsInHashtags = (arr) => {
+  const elements = {};
+  for (const element of arr) {
+    if (elements[element]) {
+      return true;
     }
-    while (previousValues.includes(currentValue)) {
-      currentValue = getRandomInteger(min, max);
-    }
-    previousValues.push(currentValue);
-    return currentValue;
-  };
+    elements[element] = 1;
+  }
+  return false;
 };
 
-const getRandomArrayElement = (elements) => elements[getRandomInteger(0, elements.length - 1)];
-
-const isEscapeKey = (evt) => evt.key === 'Escape';
-
-export {getRandomInteger, createRandomId, getRandomArrayElement, isEscapeKey};
+export {
+  isEscape,
+  checkForRepeatsInHashtags,
+  showingAlert
+};
