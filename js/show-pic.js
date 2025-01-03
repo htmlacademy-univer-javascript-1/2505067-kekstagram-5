@@ -1,26 +1,31 @@
-const showPicturesTemplate = document.querySelector('#picture')
-  .content
-  .querySelector('.picture');
+import { openBigPost } from './drawphotos.js';
 
-const container = document.querySelector('.pictures');
+const pictureElements = document.querySelector('.pictures');
+const photoTemplate = document.querySelector('#picture').content.querySelector('.picture');
 
-const createPictures = ({url, description, likes, comments, id}) => {
-  const showPictures = showPicturesTemplate.cloneNode(true);
-  showPictures.querySelector('.picture__img').src = url;
-  showPictures.querySelector('.picture__img').alt = description;
-  showPictures.querySelector('.picture__likes').textContent = likes;
-  showPictures.querySelector('.picture__comments').textContent = comments.length;
-  showPictures.dataset.pictureId = id;
-  return showPictures;
+const getPictureClickWorker = (pictures) => (evt) => {
+  const pictureElement = evt.target.closest('.picture');
+  if (pictureElement) {
+    const currentPicture = pictures.find((photo) => photo.url === pictureElement.querySelector('.picture__img').getAttribute('src'));
+    openBigPost(currentPicture);
+  }
 };
 
-const renderMiniPictuers = (pictures) => {
-  const similarListFragment = document.createDocumentFragment();
-  pictures.forEach((picture) => {
-    similarListFragment.append(createPictures(picture));
+const makeAllPictures = (allPictures) => {
+  const fragmentPictures = document.createDocumentFragment();
+
+  allPictures.forEach(({url, description, likes, comments}) => {
+    const currentPicture = photoTemplate.cloneNode(true);
+    const image = currentPicture.querySelector('.picture__img');
+    image.src = url;
+    image.alt = description;
+    currentPicture.querySelector('.picture__comments').textContent = comments.length;
+    currentPicture.querySelector('.picture__likes').textContent = likes;
+    fragmentPictures.appendChild(currentPicture);
   });
-  container.append(similarListFragment);
+
+  pictureElements.appendChild(fragmentPictures);
+  pictureElements.addEventListener('click', getPictureClickWorker(allPictures));
 };
 
-export { renderMiniPictuers };
-
+export {makeAllPictures};
