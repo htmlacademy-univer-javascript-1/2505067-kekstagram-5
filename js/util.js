@@ -1,5 +1,35 @@
-const ALERT_DISPLAY_DURATION = 5000;
+const ALERT_DISPLAY_DURATION_MS = 5000;
+
 const isEscape = (evt) => evt.key === 'Escape';
+
+const getRandomIntValue = (min, max) => {
+  const lowerBound = Math.ceil(Math.min(min, max));
+  const upperBound = Math.floor(Math.max(min, max));
+  return Math.floor(Math.random() * (upperBound - lowerBound + 1) + lowerBound);
+};
+
+const getArrayRandomPrototype = (currentArray, prototypeSize) => {
+  if (currentArray.length <= prototypeSize) {
+    return currentArray.slice();
+  }
+  const currentArrayCopy = currentArray.slice();
+  const prototype = [];
+
+  for (let i = 0; i < prototypeSize; i++) {
+    const randomIntIndex = getRandomIntValue(0, currentArrayCopy.length - 1);
+    prototype.push(currentArrayCopy[randomIntIndex]);
+    currentArrayCopy.splice(randomIntIndex, 1);
+  }
+  return prototype;
+};
+
+const debounce = (callback, timeoutDelay = 500) => {
+  let timeoutId;
+  return (...rest) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => callback.apply(this, rest), timeoutDelay);
+  };
+};
 
 const showingAlert = (message) => {
   const alertMessage = document.createElement('div');
@@ -16,7 +46,7 @@ const showingAlert = (message) => {
   document.body.append(alertMessage);
   setTimeout(() => {
     alertMessage.remove();
-  }, ALERT_DISPLAY_DURATION);
+  }, ALERT_DISPLAY_DURATION_MS);
 };
 
 const checkForRepeatsInHashtags = (arr) => {
@@ -33,5 +63,8 @@ const checkForRepeatsInHashtags = (arr) => {
 export {
   isEscape,
   checkForRepeatsInHashtags,
-  showingAlert
+  showingAlert,
+  getRandomIntValue,
+  getArrayRandomPrototype,
+  debounce
 };
