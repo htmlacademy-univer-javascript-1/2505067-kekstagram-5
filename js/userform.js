@@ -1,7 +1,9 @@
-import { checkForRepeatsInHashtags, isEscape } from './util.js';
+import { checkForRepeatsInHashtags, isEscape } from './utils.js';
 import { addEventListenerToScaleElemets, removeEventListenerFromScaleElemets, addFilter, removeFilter } from './effects.js';
 import { sendData } from './api.js';
 
+const DEFAULT_PICTURE = 'img/upload-default-image.jpg';
+const TYPES_OF_FILES = ['jpg', 'jpeg', 'png'];
 const MAX_TAG_COUNT = 140;
 const HASHTAG_PATTERN = 5;
 const hashtagPattern = /^#[A-Za-zА-Яа-я0-9]{1,19}$/;
@@ -9,10 +11,11 @@ const errorMessageClass = 'upload-form__error-text';
 let hashtagErrorMessage = '';
 
 const imageUploadForm = document.querySelector('.img-upload__form');
-const imageScaleValue = imageUploadForm.querySelector('.scale__control--value');
-const imageUploadInput = imageUploadForm.querySelector('.img-upload__input');
-const imageUploadOverlay = imageUploadForm.querySelector('.img-upload__overlay');
-const uploadOverlayCloseButton = imageUploadOverlay.querySelector('.img-upload__cancel');
+const imageScaleValue = imageUploadForm.querySelector('.img-upload__preview img');
+const imageUploadInput = document.querySelectorAll('.effects__preview');
+const loadImage = imageUploadForm.querySelector('.img-upload__input');
+const uploadOverlay = imageUploadForm.querySelector('.img-upload__overlay');
+const uploadOverlayCloseButton = uploadOverlay.querySelector('.img-upload__cancel');
 const submitUploadButton = imageUploadForm.querySelector('.img-upload__submit');
 const hashtagsInputField = imageUploadForm.querySelector('.text__hashtags');
 const descriptionInputField = imageUploadForm.querySelector('.text__description');
@@ -21,7 +24,7 @@ const successMessageCloseButton = successMessageTemplate.querySelector('.success
 const errorMessageTemplate = document.querySelector('#error').content.querySelector('.error');
 const errorMessageCloseButton = errorMessageTemplate.querySelector('.error__button');
 
-const pristineValidator = new Pristine(imageUploadForm, {
+const pristine = new Pristine(imageUploadForm, {
   classTo: 'img-upload__field-wrapper',
   errorTextParent: 'img-upload__field-wrapper',
   errorTextTag: 'div',
@@ -38,7 +41,7 @@ const makeHashtagValidation = (currentHashtag) => {
   }
 
   for (const hashtag of allHashtags) {
-    if (! hashtagPattern.test(hashtag)) {
+    if (!hashtagPattern.test(hashtag)) {
       hashtagErrorMessage = 'Введён некорректный хэштег';
       return false;
     }
@@ -55,7 +58,7 @@ const makeHashtagValidation = (currentHashtag) => {
 };
 
 const onInputInForm = () => {
-  if (pristineValidator.validate()) {
+  if (pristine.validate()) {
     submitUploadButton.disabled = false;
   } else {
     submitUploadButton.disabled = true;
@@ -66,62 +69,63 @@ const makeDescrValidation = (value) => value.length <= MAX_TAG_COUNT;
 
 const getMessageIfErrorInHashtag = () => hashtagErrorMessage;
 
-pristineValidator.addValidator(hashtagsInputField, makeHashtagValidation, getMessageIfErrorInHashtag);
-pristineValidator.addValidator(descriptionInputField, makeDescrValidation, `Максимальная длина комментария - ${MAX_TAG_COUNT} символов`);
+pristine.addValidator(hashtagsInputField, makeHashtagValidation, getMessageIfErrorInHashtag);
+pristine.addValidator(descriptionInputField, makeDescrValidation, `Максимальная длина комментария - ${ MAX_TAG_COUNT} символов`);
 
-const getKeydownHandler = (currentFunction) => (evt) => {
-  if (isEscape(evt)) {
-    evt.preventDefault();
-    currentFunction();
+const onClosingWindowKeydown = (evt) => {
+  if (isEscape(evt) && evt.target !== hashtagsInputField && evt.target !== descriptionInputField) {
+    hideEditingForm();
   }
 };
 
-const handleInputKeydown = (event) => event.stopPropagation();
-const handleCloseWindowKeydown = getKeydownHandler(hideEditingForm);
-const handleCloseWindowClick = () => hideEditingForm();
+const onCloseWindowElementClick = () => hideEditingForm();
 
 function hideEditingForm() {
-  imageUploadOverlay.classList.add('hidden');
+  uploadOverlay.classList.add('hidden');
   document.body.classList.remove('modal-open');
 
-  uploadOverlayCloseButton.removeEventListener('click', handleCloseWindowClick);
-  document.removeEventListener('keydown', handleCloseWindowKeydown);
-  hashtagsInputField.removeEventListener('keydown', handleInputKeydown);
-  descriptionInputField.removeEventListener('keydown', handleInputKeydown);
+  loadImage.value = '';
+  imageScaleValue.src = DEFAULT_PICTURE;
+  imageUploadInput.forEach((currentPreview) => {
+    currentPreview.style.removeProperty('background-image');
+  });
+  removeFilter();
+  removeEventListenerFromScaleElemets();
+
+  uploadOverlayCloseButton.removeEventListener('click', onCloseWindowElementClick);
+  document.removeEventListener('keydown', onClosingWindowKeydown);
   hashtagsInputField.removeEventListener('input', onInputInForm);
   descriptionInputField.removeEventListener('input', onInputInForm);
-  removeEventListenerFromScaleElemets();
-  removeFilter();
 
-  imageScaleValue.value = '100%';
-  hashtagsInputField.value = '';
-  descriptionInputField.value = '';
-  imageUploadInput.value = '';
-
-  const errorContainers = document.querySelectorAll(`.${errorMessageClass}`);
-  if (errorContainers) {
-    errorContainers.forEach((container) => container.setAttribute('style', 'display: none;'));
-  }
+  imageUploadForm.reset();
+  pristine.reset();
 }
 
 const showEditingForm = () => {
-  imageUploadOverlay.classList.remove('hidden');
-  document.body.classList.add('modal-open');
+  const currentImage = loadImage.files[0];
 
-  uploadOverlayCloseButton.addEventListener('click', handleCloseWindowClick);
-  document.addEventListener('keydown', handleCloseWindowKeydown);
-  hashtagsInputField.addEventListener('keydown', handleInputKeydown);
-  descriptionInputField.addEventListener('keydown', handleInputKeydown);
+  if (TYPES_OF_FILES.some((currentType) => currentImage.name.toLowerCase().endsWith(currentType))) {
+    imageScaleValue.src = URL.createObjectURL(currentImage);
+    imageUploadInput.forEach((currentPreview) => {
+      currentPreview.style.backgroundImage = `url('${URL.createObjectURL(currentImage)}')`;
+    });
+  }
+
+  addFilter();
+  addEventListenerToScaleElemets();
+
+  uploadOverlayCloseButton.addEventListener('click', onCloseWindowElementClick);
+  document.addEventListener('keydown', onClosingWindowKeydown);
   hashtagsInputField.addEventListener('input', onInputInForm);
   descriptionInputField.addEventListener('input', onInputInForm);
 
-  addEventListenerToScaleElemets();
-  addFilter();
+  document.body.classList.add('modal-open');
+  uploadOverlay.classList.remove('hidden');
 };
 
 const onLoadingPhotoElementChange = () => showEditingForm();
 
-imageUploadInput.addEventListener('change', onLoadingPhotoElementChange);
+loadImage.addEventListener('change', onLoadingPhotoElementChange);
 
 const blockSubmitButton = () => {
   submitUploadButton.disabled = true;
@@ -139,43 +143,50 @@ const closingFormClickHandler = (className, currentFunction) => (evt) => {
   }
 };
 
-const handleOutsideSuccessFormClick = closingFormClickHandler('success__inner', closeSuccessAlert);
-const handleOutsideErrorFormClick = closingFormClickHandler('error__inner', closeErrorAlert);
-const handleErrorCloseButtonClick = () => closeErrorAlert();
-const handleSuccessCloseButtonClick = () => closeSuccessAlert();
-const handleSuccessFormKeydown = getKeydownHandler(closeSuccessAlert);
-const handleErrorFormKeydown = getKeydownHandler(closeErrorAlert);
+const getKeydownHandler = (currentFunction) => (evt) => {
+  if (isEscape(evt)) {
+    evt.preventDefault();
+    currentFunction();
+  }
+};
+
+const onOutsideIfSuccessFormClick = closingFormClickHandler('success__inner', closeSuccessAlert);
+const onOutsideIfErrorFormClick = closingFormClickHandler('error__inner', closeErrorAlert);
+const onErrorCloseButtonClick = () => closeErrorAlert();
+const onSuccessCloseButtonClick = () => closeSuccessAlert();
+const onSuccessFormKeydown = getKeydownHandler(closeSuccessAlert);
+const onErrorFormKeydown = getKeydownHandler(closeErrorAlert);
 
 function closeSuccessAlert() {
-  document.removeEventListener('click', handleOutsideSuccessFormClick);
-  document.removeEventListener('keydown', handleSuccessFormKeydown);
+  document.removeEventListener('click', onOutsideIfSuccessFormClick);
+  document.removeEventListener('keydown', onSuccessFormKeydown);
   document.body.removeChild(successMessageTemplate);
-  successMessageCloseButton.removeEventListener('click', handleSuccessCloseButtonClick);
+  successMessageCloseButton.removeEventListener('click', onSuccessCloseButtonClick);
 }
 
 function closeErrorAlert() {
-  imageUploadOverlay.classList.remove('hidden');
-  document.addEventListener('keydown', handleCloseWindowKeydown);
+  uploadOverlay.classList.remove('hidden');
+  document.addEventListener('keydown', onClosingWindowKeydown);
   document.body.removeChild(errorMessageTemplate);
-  errorMessageCloseButton.removeEventListener('click', handleErrorCloseButtonClick);
-  document.removeEventListener('click', handleOutsideErrorFormClick);
-  document.removeEventListener('keydown', handleErrorFormKeydown);
+  errorMessageCloseButton.removeEventListener('click', onErrorCloseButtonClick);
+  document.removeEventListener('click', onOutsideIfErrorFormClick);
+  document.removeEventListener('keydown', onErrorFormKeydown);
 }
 
 const openSuccessAlert = () => {
-  successMessageCloseButton.addEventListener('click', handleSuccessCloseButtonClick);
+  successMessageCloseButton.addEventListener('click', onSuccessCloseButtonClick);
   document.body.appendChild(successMessageTemplate);
-  document.addEventListener('click', handleOutsideSuccessFormClick);
-  document.addEventListener('keydown', handleSuccessFormKeydown);
+  document.addEventListener('click', onOutsideIfSuccessFormClick);
+  document.addEventListener('keydown', onSuccessFormKeydown);
 };
 
 const openErrorAlert = () => {
-  imageUploadOverlay.classList.add('hidden');
-  document.removeEventListener('keydown', handleCloseWindowKeydown);
-  errorMessageCloseButton.addEventListener('click', handleErrorCloseButtonClick);
+  uploadOverlay.classList.add('hidden');
+  document.removeEventListener('keydown', onClosingWindowKeydown);
+  errorMessageCloseButton.addEventListener('click', onErrorCloseButtonClick);
   document.body.appendChild(errorMessageTemplate);
-  document.addEventListener('click', handleOutsideErrorFormClick);
-  document.addEventListener('keydown', handleErrorFormKeydown);
+  document.addEventListener('click', onOutsideIfErrorFormClick);
+  document.addEventListener('keydown', onErrorFormKeydown);
 };
 
 imageUploadForm.addEventListener('submit', (evt) => {

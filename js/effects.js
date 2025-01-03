@@ -18,7 +18,7 @@ const zoomOutImage = () => {
   let currentScaleValue = parseInt(scaleValueControl.value, 10);
   if (currentScaleValue > MIN_ZOOM_LEVEL) {
     currentScaleValue -= ZOOM_INCREMENT;
-    scaleValueControl.value = currentScaleValue.toString();
+    scaleValueControl.value = `${currentScaleValue.toString()}%`;
     previewImage.style.transform = `scale(${currentScaleValue / FULL_PERCENTAGE})`;
   }
 };
@@ -27,7 +27,7 @@ const zoomInImage = () => {
   let currentScaleValue = parseInt(scaleValueControl.value, 10);
   if (currentScaleValue < MAX_ZOOM_LEVEL) {
     currentScaleValue += ZOOM_INCREMENT;
-    scaleValueControl.value = currentScaleValue.toString();
+    scaleValueControl.value = `${currentScaleValue.toString()}%`;
     previewImage.style.transform = `scale(${currentScaleValue / FULL_PERCENTAGE})`;
   }
 };

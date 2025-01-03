@@ -48,7 +48,7 @@ const remakePhoto = () => {
   modalDescriptionElement.textContent = currentPhoto.description;
 
   makeEmptyComments();
-  renderComments(currentPhoto);
+  renderComments();
 };
 
 const listenKeydown = (evt) => {
