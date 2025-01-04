@@ -11,12 +11,12 @@ const commentTemplateElement = modalCommentsContainer.querySelector('.social__co
 const loadMoreCommentsButton = modalPictureElement.querySelector('.comments-loader');
 const commentsCounterElement = modalPictureElement.querySelector('.social__comment-count');
 
-let currentPhoto;
-let currentCommentIndex = 0;
-
 const makeEmptyComments = () => {
   modalCommentsContainer.innerHTML = '';
 };
+
+let currentPhoto;
+let currentCommentIndex = 0;
 
 const remakeComment = (comment) => {
   const remadeComment = commentTemplateElement.cloneNode(true);
@@ -26,6 +26,7 @@ const remakeComment = (comment) => {
   remadeComment.querySelector('.social__text').textContent = comment.message;
   return remadeComment;
 };
+
 
 const renderComments = () => {
   let currentIndex = 0;
@@ -42,16 +43,7 @@ const renderComments = () => {
   commentsCounterElement.innerHTML = `${currentCommentIndex} из <span class="comments-count">${currentPhoto.comments.length}</span> комментариев`;
 };
 
-const remakePhoto = () => {
-  modalImageElement.src = currentPhoto.url;
-  modalLikesCount.textContent = currentPhoto.likes;
-  modalDescriptionElement.textContent = currentPhoto.description;
-
-  makeEmptyComments();
-  renderComments();
-};
-
-const listenKeydown = (evt) => {
+const onKeydown = (evt) => {
   if (isEscape(evt)) {
     evt.preventDefault();
     closeBigPost();
@@ -61,12 +53,25 @@ const listenKeydown = (evt) => {
 const onClosePostClick = () => closeBigPost();
 const onCommentsLoaderButtonClick = () => renderComments();
 
+const remakePhoto = () => {
+  const { url, likes, description } = currentPhoto;
+
+  modalImageElement.src = url;
+  modalLikesCount.textContent = likes;
+  modalDescriptionElement.textContent = description;
+
+  makeEmptyComments();
+  renderComments();
+};
+
 const openBigPost = (currentPost) => {
   modalPictureElement.classList.remove('hidden');
   document.body.classList.add('modal-open');
-  document.addEventListener('keydown', listenKeydown);
+
+  document.addEventListener('keydown', onKeydown);
   closeModalButton.addEventListener('click', onClosePostClick);
   loadMoreCommentsButton.addEventListener('click', onCommentsLoaderButtonClick);
+
   currentPhoto = currentPost;
   remakePhoto();
 };
@@ -75,10 +80,10 @@ function closeBigPost() {
   modalPictureElement.classList.add('hidden');
   document.body.classList.remove('modal-open');
   loadMoreCommentsButton.classList.remove('hidden');
-  document.removeEventListener('keydown', listenKeydown);
+  document.removeEventListener('keydown', onKeydown);
   closeModalButton.removeEventListener('click', onClosePostClick);
   loadMoreCommentsButton.removeEventListener('click', onCommentsLoaderButtonClick);
   currentCommentIndex = 0;
 }
 
-export {openBigPost};
+export { openBigPost };
