@@ -1,46 +1,46 @@
-import { makeAllPictures } from './drawMiniatures.js';
-import {getData} from './api.js';
-import { showingAlert, getArrayRandomPrototype, debounce } from './utils.js';
+import { makeAllPictures } from './show-minipic.js';
+import { getData } from './api.js';
+import { showAlert, getArrayRandomPrototype, debounce } from './util.js';
 
-const TIMEOUT_DURATION_MS = 500;
-const RANDOM_PICTURES_COUNT = 10;
-const DEFAULT_FILTER_CLASS = 'filter-default';
-const RANDOM_FILTER_CLASS = 'filter-random';
+const REQUEST_DURATION_MS = 500;
+const NUMBER_RANDOM_PICS = 10;
+
+const FILTER_CLASSES = {
+  DEFAULT: 'filter-default',
+  RANDOM: 'filter-random',
+  POPULAR: 'filter-discussed',
+};
+
 const ACTIVE_FILTER_BUTTON_CLASS = 'img-filters__button--active';
-const POPULAR_FILTER_CLASS = 'filter-discussed';
 
-const filterButtonsList = document.body.querySelectorAll('.img-filters__button');
+const filterButtons = document.querySelectorAll('.img-filters__button');
 
-let currentFilterId = DEFAULT_FILTER_CLASS;
-let currentFilterElement = document.getElementById(DEFAULT_FILTER_CLASS);
+let currentFilter = FILTER_CLASSES.DEFAULT;
+let currentActiveButton = document.getElementById(FILTER_CLASSES.DEFAULT);
 
-const makePicturesFilter = (allPictures) => {
-  let requiredPictures = [];
-  switch (currentFilterId) {
-    case DEFAULT_FILTER_CLASS:
-      requiredPictures = allPictures;
-      break;
-    case POPULAR_FILTER_CLASS:
-      requiredPictures = allPictures.slice().sort((first, second) => second.comments.length - first.comments.length);
-      break;
-    case RANDOM_FILTER_CLASS:
-      requiredPictures = getArrayRandomPrototype(allPictures, RANDOM_PICTURES_COUNT);
-      break;
+const filterPictures = (pictures) => {
+  switch (currentFilter) {
+    case FILTER_CLASSES.POPULAR:
+      return [...pictures].sort((a, b) => b.comments.length - a.comments.length);
+    case FILTER_CLASSES.RANDOM:
+      return getArrayRandomPrototype(pictures, NUMBER_RANDOM_PICS);
+    case FILTER_CLASSES.DEFAULT:
+    default:
+      return pictures;
   }
-  return requiredPictures;
 };
 
-const remakeRenderingPictures = (allPictures) => {
-  const remadePhotos = makePicturesFilter(allPictures);
-  document.querySelectorAll('.picture').forEach((currentPicture) => currentPicture.remove());
-  makeAllPictures(remadePhotos);
+const updatePictureRendering = (allPictures) => {
+  const filteredPictures = filterPictures(allPictures);
+  document.querySelectorAll('.picture').forEach((picture) => picture.remove());
+  makeAllPictures(filteredPictures);
 };
 
-const getFilterButtonsClickWorker = (callback) => (evt) => {
-  currentFilterId = evt.target.id;
-  currentFilterElement.classList.remove(ACTIVE_FILTER_BUTTON_CLASS);
-  currentFilterElement = evt.target;
-  currentFilterElement.classList.add(ACTIVE_FILTER_BUTTON_CLASS);
+const createFilterButtonClickHandler = (callback) => (event) => {
+  currentActiveButton.classList.remove(ACTIVE_FILTER_BUTTON_CLASS);
+  currentFilter = event.target.id;
+  currentActiveButton = event.target;
+  currentActiveButton.classList.add(ACTIVE_FILTER_BUTTON_CLASS);
   callback();
 };
 
@@ -48,7 +48,8 @@ getData()
   .then((allPictures) => {
     makeAllPictures(allPictures);
     document.querySelector('.img-filters').classList.remove('img-filters--inactive');
-    const onClickFilterButton = getFilterButtonsClickWorker(debounce(() => remakeRenderingPictures(allPictures), TIMEOUT_DURATION_MS));
-    filterButtonsList.forEach((currentElement) => currentElement.addEventListener('click', onClickFilterButton));
+
+    const onFilterButtonClick = createFilterButtonClickHandler(debounce(() => updatePictureRendering(allPictures), REQUEST_DURATION_MS));
+    filterButtons.forEach((button) => button.addEventListener('click', onFilterButtonClick));
   })
-  .catch((error) => showingAlert(error.message));
+  .catch((error) => showAlert(error.message));
