@@ -5,26 +5,26 @@ import { showAlert, getArrayRandomPrototype, debounce } from './util.js';
 const REQUEST_DURATION_MS = 500;
 const NUMBER_RANDOM_PICS = 10;
 
-const FILTER_CLASSES = {
-  DEFAULT: 'filter-default',
-  RANDOM: 'filter-random',
-  POPULAR: 'filter-discussed',
+const FilterClasses = {
+  Default: 'filter-default',
+  Random: 'filter-random',
+  Popular: 'filter-discussed',
 };
 
 const ACTIVE_FILTER_BUTTON_CLASS = 'img-filters__button--active';
 
 const filterButtons = document.querySelectorAll('.img-filters__button');
 
-let currentFilter = FILTER_CLASSES.DEFAULT;
-let currentActiveButton = document.getElementById(FILTER_CLASSES.DEFAULT);
+let currentFilter = FilterClasses.Default;
+let currentActiveButton = document.getElementById(FilterClasses.Default);
 
 const filterPictures = (pictures) => {
   switch (currentFilter) {
-    case FILTER_CLASSES.POPULAR:
+    case FilterClasses.Popular:
       return [...pictures].sort((a, b) => b.comments.length - a.comments.length);
-    case FILTER_CLASSES.RANDOM:
+    case FilterClasses.Random:
       return getArrayRandomPrototype(pictures, NUMBER_RANDOM_PICS);
-    case FILTER_CLASSES.DEFAULT:
+    case FilterClasses.Default:
     default:
       return pictures;
   }
